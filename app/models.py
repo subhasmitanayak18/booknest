@@ -115,3 +115,31 @@ class Shelf(Base):
         default=datetime.utcnow,
         nullable=False
     )
+class ShelfCollaborator(Base):
+    __tablename__ = "shelf_collaborators"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    shelf_id: Mapped[int] = mapped_column(
+        ForeignKey("shelves.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    role: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )

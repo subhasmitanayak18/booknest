@@ -100,3 +100,19 @@ class ShelfResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class ShelfShareRequest(BaseModel):
+    email: EmailStr
+    role: str = "viewer"
+
+
+class ShelfCollaboratorResponse(BaseModel):
+    id: int
+    shelf_id: int
+    user_id: int
+    role: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+class ShelfRoleUpdate(BaseModel):
+    role: str
