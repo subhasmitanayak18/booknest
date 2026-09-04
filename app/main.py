@@ -3,7 +3,7 @@ from sqlalchemy import text
 
 from app.database import Base, engine
 from app import models
-from app.routers import auth
+from app.routers import auth, books, shelves
 
 
 app = FastAPI(title="BookNest API")
@@ -11,7 +11,8 @@ app = FastAPI(title="BookNest API")
 Base.metadata.create_all(bind=engine)
 
 app.include_router(auth.router)
-
+app.include_router(books.router)
+app.include_router(shelves.router)
 @app.get("/")
 def root():
     return {"message": "Welcome to BookNest API"}
