@@ -11,6 +11,8 @@ from app.schemas import (
     ShelfRoleUpdate
 )
 from app.dependencies.auth import get_current_user
+from app.activity import create_activity
+from app.event_utils import notify_user, notify_users
 
 
 router = APIRouter(
@@ -30,8 +32,19 @@ def get_collaborator(
     ).first()
 
 
+def get_participant_ids(shelf, db):
+    collaborators = db.query(ShelfCollaborator).filter(
+        ShelfCollaborator.shelf_id == shelf.id
+    ).all()
+
+    return [shelf.owner_id] + [
+        collaborator.user_id
+        for collaborator in collaborators
+    ]
+
+
 @router.post("/", response_model=ShelfResponse)
-def create_shelf(
+async def create_shelf(
     shelf: ShelfCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -44,6 +57,15 @@ def create_shelf(
     db.add(new_shelf)
     db.commit()
     db.refresh(new_shelf)
+
+    await notify_user(
+        current_user.id,
+        "SHELF_CREATED",
+        {
+            "shelf_id": new_shelf.id,
+            "name": new_shelf.name
+        }
+    )
 
     return new_shelf
 
@@ -109,7 +131,10 @@ def get_shelf(
     )
 
     if not is_owner and not collaborator:
-        raise HTTPException(403, "You do not have access to this shelf")
+        raise HTTPException(
+            403,
+            "You do not have access to this shelf"
+        )
 
     rows = db.execute(
         book_shelves.select().where(
@@ -137,7 +162,7 @@ def get_shelf(
 
 
 @router.post("/{shelf_id}/books/{book_id}")
-def add_book_to_shelf(
+async def add_book_to_shelf(
     shelf_id: int,
     book_id: int,
     db: Session = Depends(get_db),
@@ -197,7 +222,30 @@ def add_book_to_shelf(
         )
     )
 
+    participant_ids = get_participant_ids(shelf, db)
+
+    await create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="BOOK_ADDED_TO_SHELF",
+        description=(
+            f'Added "{book.title}" to shelf "{shelf.name}"'
+        ),
+        book_id=book.id,
+        shelf_id=shelf.id
+    )
+
     db.commit()
+
+    await notify_users(
+        participant_ids,
+        "SHELF_BOOK_ADDED",
+        {
+            "shelf_id": shelf.id,
+            "book_id": book.id,
+            "title": book.title
+        }
+    )
 
     return {
         "message": "Book added to shelf successfully"
@@ -205,7 +253,7 @@ def add_book_to_shelf(
 
 
 @router.delete("/{shelf_id}/books/{book_id}")
-def remove_book_from_shelf(
+async def remove_book_from_shelf(
     shelf_id: int,
     book_id: int,
     db: Session = Depends(get_db),
@@ -234,6 +282,11 @@ def remove_book_from_shelf(
             "Only the owner or editor can remove books"
         )
 
+    book = db.query(Book).filter(
+        Book.id == book_id,
+        Book.owner_id == shelf.owner_id
+    ).first()
+
     result = db.execute(
         book_shelves.delete().where(
             (book_shelves.c.book_id == book_id) &
@@ -247,7 +300,30 @@ def remove_book_from_shelf(
             "Book is not on this shelf"
         )
 
+    participant_ids = get_participant_ids(shelf, db)
+
+    await create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="BOOK_REMOVED_FROM_SHELF",
+        description=(
+            f'Removed "{book.title if book else "book"}" '
+            f'from shelf "{shelf.name}"'
+        ),
+        book_id=book_id,
+        shelf_id=shelf.id
+    )
+
     db.commit()
+
+    await notify_users(
+        participant_ids,
+        "SHELF_BOOK_REMOVED",
+        {
+            "shelf_id": shelf.id,
+            "book_id": book_id
+        }
+    )
 
     return {
         "message": "Book removed from shelf successfully"
@@ -258,7 +334,7 @@ def remove_book_from_shelf(
     "/{shelf_id}/share",
     response_model=ShelfCollaboratorResponse
 )
-def share_shelf(
+async def share_shelf(
     shelf_id: int,
     data: ShelfShareRequest,
     db: Session = Depends(get_db),
@@ -312,8 +388,31 @@ def share_shelf(
     )
 
     db.add(collaborator)
+    db.flush()
+
+    await create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="SHELF_SHARED",
+        description=(
+            f'Shared shelf "{shelf.name}" with {user.email} '
+            f'as {data.role}'
+        ),
+        shelf_id=shelf.id
+    )
+
     db.commit()
     db.refresh(collaborator)
+
+    await notify_users(
+        [shelf.owner_id, user.id],
+        "SHELF_SHARED",
+        {
+            "shelf_id": shelf.id,
+            "user_id": user.id,
+            "role": data.role
+        }
+    )
 
     return collaborator
 
@@ -322,7 +421,7 @@ def share_shelf(
     "/{shelf_id}/collaborators/{user_id}",
     response_model=ShelfCollaboratorResponse
 )
-def change_collaborator_role(
+async def change_collaborator_role(
     shelf_id: int,
     user_id: int,
     data: ShelfRoleUpdate,
@@ -354,16 +453,39 @@ def change_collaborator_role(
             "Collaborator not found"
         )
 
+    old_role = collaborator.role
     collaborator.role = data.role
+
+    await create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="COLLABORATOR_ROLE_CHANGED",
+        description=(
+            f'Changed collaborator role on shelf "{shelf.name}" '
+            f'from "{old_role}" to "{data.role}"'
+        ),
+        shelf_id=shelf.id
+    )
 
     db.commit()
     db.refresh(collaborator)
+
+    await notify_users(
+        [shelf.owner_id, user_id],
+        "COLLABORATOR_ROLE_CHANGED",
+        {
+            "shelf_id": shelf.id,
+            "user_id": user_id,
+            "old_role": old_role,
+            "role": data.role
+        }
+    )
 
     return collaborator
 
 
 @router.delete("/{shelf_id}/collaborators/{user_id}")
-def remove_collaborator(
+async def remove_collaborator(
     shelf_id: int,
     user_id: int,
     db: Session = Depends(get_db),
@@ -388,8 +510,30 @@ def remove_collaborator(
             "Collaborator not found"
         )
 
+    participant_ids = get_participant_ids(shelf, db)
+
+    await create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="COLLABORATOR_REMOVED",
+        description=(
+            f'Removed collaborator {user_id} '
+            f'from shelf "{shelf.name}"'
+        ),
+        shelf_id=shelf.id
+    )
+
     db.delete(collaborator)
     db.commit()
+
+    await notify_users(
+        participant_ids,
+        "COLLABORATOR_REMOVED",
+        {
+            "shelf_id": shelf.id,
+            "user_id": user_id
+        }
+    )
 
     return {
         "message": "Collaborator removed successfully"
@@ -397,7 +541,7 @@ def remove_collaborator(
 
 
 @router.delete("/{shelf_id}")
-def delete_shelf(
+async def delete_shelf(
     shelf_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -409,6 +553,18 @@ def delete_shelf(
 
     if not shelf:
         raise HTTPException(404, "Shelf not found")
+
+    participant_ids = get_participant_ids(shelf, db)
+
+    await create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="SHELF_DELETED",
+        description=(
+            f'Deleted shelf "{shelf.name}"'
+        ),
+        shelf_id=shelf.id
+    )
 
     db.execute(
         book_shelves.delete().where(
@@ -422,6 +578,14 @@ def delete_shelf(
 
     db.delete(shelf)
     db.commit()
+
+    await notify_users(
+        participant_ids,
+        "SHELF_DELETED",
+        {
+            "shelf_id": shelf_id
+        }
+    )
 
     return {
         "message": "Shelf deleted successfully"

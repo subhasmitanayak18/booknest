@@ -143,3 +143,74 @@ class ShelfCollaborator(Base):
         default=datetime.utcnow,
         nullable=False
     )
+class Loan(Base):
+    __tablename__ = "loans"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    book_id: Mapped[int] = mapped_column(
+        ForeignKey("books.id"),
+        nullable=False,
+        index=True
+    )
+
+    owner_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    borrower_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    lent_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    returned_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+class Activity(Base):
+    __tablename__ = "activities"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    action: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+
+    description: Mapped[str] = mapped_column(
+        Text,
+        nullable=False
+    )
+
+    book_id: Mapped[int | None] = mapped_column(
+        ForeignKey("books.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
+    shelf_id: Mapped[int | None] = mapped_column(
+        ForeignKey("shelves.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+        index=True
+    )

@@ -116,3 +116,30 @@ class ShelfCollaboratorResponse(BaseModel):
         from_attributes = True
 class ShelfRoleUpdate(BaseModel):
     role: str
+class ReadingProgressUpdate(BaseModel):
+    current_page: int = Field(ge=0)
+class LoanCreate(BaseModel):
+    borrower_email: EmailStr
+
+
+class LoanResponse(BaseModel):
+    id: int
+    book_id: int
+    owner_id: int
+    borrower_id: int
+    lent_at: datetime
+    returned_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+class ActivityResponse(BaseModel):
+    id: int
+    user_id: int
+    action: str
+    description: str
+    book_id: Optional[int]
+    shelf_id: Optional[int]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
