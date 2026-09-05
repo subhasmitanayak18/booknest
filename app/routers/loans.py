@@ -76,15 +76,22 @@ async def lend_book(
     db.flush()
 
     await create_activity(
-        db=db,
-        user_id=current_user.id,
-        action="BOOK_LENT",
-        description=(
-            f'Lent "{book.title}" to {borrower.email}'
-        ),
-        book_id=book.id,
-        notify_user_ids=[current_user.id, borrower.id]
-    )
+    db=db,
+    user_id=current_user.id,
+    action="BOOK_LENT",
+    description=f'Lent "{book.title}" to {borrower.email}',
+    book_id=book.id,
+    notify_user_ids=[current_user.id, borrower.id]
+)
+
+    await create_activity(
+    db=db,
+    user_id=borrower.id,
+    action="BOOK_LENT",
+    description=f'Borrowed "{book.title}" from {current_user.email}',
+    book_id=book.id,
+    notify_user_ids=[borrower.id]
+)
 
     db.commit()
     db.refresh(loan)
@@ -155,17 +162,19 @@ def get_borrowed_books(
 
     return result
 
-
 @router.put("/{loan_id}/return", response_model=LoanResponse)
 async def return_book(
     loan_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Only the owner can mark the book as returned
+    # Owner or borrower can return the book
     loan = db.query(Loan).filter(
         Loan.id == loan_id,
-        Loan.owner_id == current_user.id
+        (
+            (Loan.owner_id == current_user.id) |
+            (Loan.borrower_id == current_user.id)
+        )
     ).first()
 
     if not loan:
@@ -186,20 +195,26 @@ async def return_book(
 
     loan.returned_at = datetime.utcnow()
 
+    book_title = book.title if book else "book"
+
+    # Activity for the user performing the return
+    if current_user.id == loan.owner_id:
+        description = (
+            f'Received "{book_title}" back from borrower'
+        )
+    else:
+        description = (
+            f'Returned "{book_title}" to the owner'
+        )
+
     await create_activity(
         db=db,
         user_id=current_user.id,
         action="BOOK_RETURNED",
-        description=(
-            f'Received "{book.title if book else "book"}" back from '
-            f'borrower {loan.borrower_id}'
-        ),
+        description=description,
         book_id=loan.book_id,
         notify_user_ids=[loan.owner_id, loan.borrower_id]
     )
-
-    db.commit()
-    db.refresh(loan)
 
     # Notify both owner and borrower
     await notify_users(
@@ -213,4 +228,8 @@ async def return_book(
         }
     )
 
+    db.commit()
+    db.refresh(loan)
+
     return loan
+
