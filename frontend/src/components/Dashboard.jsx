@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/client";
 
-function Dashboard({ onNavigate }) {
+function Dashboard({ onNavigate, realtimeEvent }) {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -29,7 +29,30 @@ function Dashboard({ onNavigate }) {
   useEffect(() => {
     loadDashboard();
   }, []);
+useEffect(() => {
+  if (!realtimeEvent) {
+    return;
+  }
 
+  const dashboardEvents = [
+    "BOOK_ADDED",
+    "BOOK_UPDATED",
+    "BOOK_DELETED",
+    "BOOK_LENT",
+    "BOOK_RETURNED",
+    "SHELF_CREATED",
+    "SHELF_BOOK_ADDED",
+    "SHELF_BOOK_REMOVED",
+    "SHELF_SHARED",
+    "COLLABORATOR_ROLE_CHANGED",
+    "COLLABORATOR_REMOVED",
+    "ACTIVITY_CREATED",
+  ];
+
+  if (dashboardEvents.includes(realtimeEvent.type)) {
+    loadDashboard();
+  }
+}, [realtimeEvent]);
   if (loading) {
     return (
       <section className="page-section">

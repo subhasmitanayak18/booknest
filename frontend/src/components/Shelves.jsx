@@ -4,18 +4,16 @@ import ShelfModal from "./ShelfModal";
 import SharedShelves from "./SharedShelves";
 import ShelfDetails from "./ShelfDetails";
 
-function Shelves({ onDataChange }) {
+function Shelves({ onDataChange, realtimeEvent }) {
   const [shelves, setShelves] = useState([]);
   const [sharedShelves, setSharedShelves] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [showShelfModal, setShowShelfModal] =
-    useState(false);
+  const [showShelfModal, setShowShelfModal] = useState(false);
 
-  const [selectedShelf, setSelectedShelf] =
-    useState(null);
+  const [selectedShelf, setSelectedShelf] = useState(null);
 
   const loadShelves = async () => {
     try {
@@ -45,6 +43,25 @@ function Shelves({ onDataChange }) {
   useEffect(() => {
     loadShelves();
   }, []);
+
+  // Refresh shelf lists when realtime shelf events arrive
+  useEffect(() => {
+    if (!realtimeEvent) {
+      return;
+    }
+
+    const shelfEvents = [
+      "SHELF_BOOK_ADDED",
+      "SHELF_BOOK_REMOVED",
+      "SHELF_SHARED",
+      "COLLABORATOR_ROLE_CHANGED",
+      "COLLABORATOR_REMOVED",
+    ];
+
+    if (shelfEvents.includes(realtimeEvent.type)) {
+      loadShelves();
+    }
+  }, [realtimeEvent]);
 
   const handleShelfCreated = async () => {
     setShowShelfModal(false);
@@ -89,6 +106,7 @@ function Shelves({ onDataChange }) {
             onDataChange();
           }
         }}
+        realtimeEvent={realtimeEvent}
       />
     );
   }

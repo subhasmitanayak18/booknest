@@ -19,6 +19,8 @@ function Books({ onDataChange }) {
   const [editingBook, setEditingBook] = useState(null);
 
   const [deletingId, setDeletingId] = useState(null);
+  const [updatingProgressId, setUpdatingProgressId] = useState(null);
+  const [progressValues, setProgressValues] = useState({});
 
   const loadBooks = async () => {
     try {
@@ -102,6 +104,46 @@ function Books({ onDataChange }) {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleProgressUpdate = async (bookId) => {
+    const currentPage = Number(progressValues[bookId]);
+
+    if (!Number.isInteger(currentPage) || currentPage < 0) {
+      setError("Current page must be a non-negative whole number.");
+      return;
+    }
+
+    try {
+      setUpdatingProgressId(bookId);
+      setError("");
+
+      await api.put(`/books/${bookId}/progress`, {
+        current_page: currentPage,
+      });
+
+      await loadBooks();
+
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (err) {
+      console.error("Progress update error:", err);
+
+      setError(
+        err.response?.data?.detail ||
+          "Unable to update reading progress."
+      );
+    } finally {
+      setUpdatingProgressId(null);
+    }
+  };
+
+  const handleProgressChange = (bookId, value) => {
+    setProgressValues((current) => ({
+      ...current,
+      [bookId]: value,
+    }));
   };
 
   const handleModalClose = () => {
@@ -245,6 +287,16 @@ function Books({ onDataChange }) {
                 onEdit={handleEditBook}
                 onDelete={handleDeleteBook}
                 deleting={deletingId === book.id}
+                progressValue={
+                  progressValues[book.id] ??
+                  book.current_page ??
+                  0
+                }
+                onProgressChange={handleProgressChange}
+                onProgressUpdate={handleProgressUpdate}
+                updatingProgress={
+                  updatingProgressId === book.id
+                }
               />
             ))}
           </div>
@@ -296,6 +348,10 @@ function BookCard({
   onEdit,
   onDelete,
   deleting,
+  progressValue,
+  onProgressChange,
+  onProgressUpdate,
+  updatingProgress,
 }) {
   const progress =
     book.total_pages > 0 && book.current_page != null
@@ -312,6 +368,7 @@ function BookCard({
       <div className="book-card-header">
         <div>
           <h3>{book.title}</h3>
+
           <p className="book-author">
             {book.author}
           </p>
@@ -362,6 +419,35 @@ function BookCard({
               className="progress-fill"
               style={{ width: `${progress}%` }}
             />
+          </div>
+
+          <div className="progress-update">
+            <input
+              type="number"
+              min="0"
+              max={book.total_pages}
+              value={progressValue}
+              onChange={(event) =>
+                onProgressChange(
+                  book.id,
+                  event.target.value
+                )
+              }
+              disabled={updatingProgress}
+            />
+
+            <button
+              type="button"
+              className="primary-small-btn"
+              disabled={updatingProgress}
+              onClick={() =>
+                onProgressUpdate(book.id)
+              }
+            >
+              {updatingProgress
+                ? "Updating..."
+                : "Update Progress"}
+            </button>
           </div>
         </div>
       )}
