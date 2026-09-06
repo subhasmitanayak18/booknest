@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "./api/client";
-
+import "./App.css";
 import Auth from "./components/Auth";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
@@ -9,7 +9,7 @@ import Shelves from "./components/Shelves";
 import Lending from "./components/Lending";
 import Activity from "./components/Activity";
 import useWebSocket from "./hooks/useWebSocket";
-
+const [openAddBook, setOpenAddBook] = useState(false);
 function App() {
  const [realtimeEvent, setRealtimeEvent] = useState(null);
 
@@ -112,11 +112,13 @@ useWebSocket(handleWebSocketEvent);
    * Navigation
    * --------------------------------------------------
    */
+const handleNavigate = (section) => {
+  setActiveSection(section);
 
-  const handleNavigate = (section) => {
-    setActiveSection(section);
-  };
-
+  if (section === "books") {
+    setOpenAddBook(true);
+  }
+};
   /*
    * --------------------------------------------------
    * Loading screen
@@ -168,7 +170,9 @@ useWebSocket(handleWebSocketEvent);
 <Books
   onDataChange={handleDataChange}
   realtimeEvent={realtimeEvent}
-/> 
+  openAddBook={openAddBook}
+  onAddBookOpened={() => setOpenAddBook(false)}
+/>
         )}
 
         {activeSection === "shelves" && (

@@ -16,22 +16,17 @@ function ShelfDetails({
   const [error, setError] = useState("");
 
   const [showShareForm, setShowShareForm] = useState(false);
-
   const [shareEmail, setShareEmail] = useState("");
   const [shareRole, setShareRole] = useState("viewer");
-
   const [shareLoading, setShareLoading] = useState(false);
 
   const [selectedBookId, setSelectedBookId] = useState("");
-
   const [addingBook, setAddingBook] = useState(false);
 
   const [removingBookId, setRemovingBookId] = useState(null);
-
   const [deletingShelf, setDeletingShelf] = useState(false);
 
   const [updatingRoleId, setUpdatingRoleId] = useState(null);
-
   const [removingCollaboratorId, setRemovingCollaboratorId] =
     useState(null);
 
@@ -44,17 +39,11 @@ function ShelfDetails({
       setLoading(true);
       setError("");
 
-      const response = await api.get(
-        `/shelves/${shelf.id}`
-      );
+      const response = await api.get(`/shelves/${shelf.id}`);
 
       setDetails(response.data);
-
       setBooks(response.data.books || []);
-
-      setCollaborators(
-        response.data.collaborators || []
-      );
+      setCollaborators(response.data.collaborators || []);
 
       const booksResponse = await api.get("/books/", {
         params: {
@@ -65,10 +54,7 @@ function ShelfDetails({
 
       setAvailableBooks(booksResponse.data);
     } catch (err) {
-      console.error(
-        "Shelf details error:",
-        err
-      );
+      console.error("Shelf details error:", err);
 
       setError(
         err.response?.data?.detail ||
@@ -83,16 +69,10 @@ function ShelfDetails({
     loadShelf();
   }, [shelf?.id]);
 
-  // Handle realtime shelf updates
   useEffect(() => {
     if (!realtimeEvent || !shelf?.id) {
       return;
     }
-
-    console.log(
-      "Shelf realtime event:",
-      realtimeEvent
-    );
 
     const shelfEvents = [
       "SHELF_BOOK_ADDED",
@@ -102,11 +82,7 @@ function ShelfDetails({
       "COLLABORATOR_REMOVED",
     ];
 
-    if (
-      !shelfEvents.includes(
-        realtimeEvent.type
-      )
-    ) {
+    if (!shelfEvents.includes(realtimeEvent.type)) {
       return;
     }
 
@@ -114,15 +90,7 @@ function ShelfDetails({
       realtimeEvent.data?.shelf_id ??
       realtimeEvent.shelf_id;
 
-    if (
-      Number(eventShelfId) ===
-      Number(shelf.id)
-    ) {
-      console.log(
-        "Refreshing shelf because of realtime event:",
-        realtimeEvent.type
-      );
-
+    if (Number(eventShelfId) === Number(shelf.id)) {
       loadShelf();
     }
   }, [realtimeEvent, shelf?.id]);
@@ -130,12 +98,6 @@ function ShelfDetails({
   const role =
     details?.role ||
     shelf?.role;
-
-  const isOwner =
-    details?.owner_id !== undefined
-      ? details.owner_id ===
-        details.current_user_id
-      : role === "owner";
 
   const canEdit =
     role === "owner" ||
@@ -162,10 +124,7 @@ function ShelfDetails({
         await onDataChange();
       }
     } catch (err) {
-      console.error(
-        "Add to shelf error:",
-        err
-      );
+      console.error("Add to shelf error:", err);
 
       setError(
         err.response?.data?.detail ||
@@ -176,9 +135,7 @@ function ShelfDetails({
     }
   };
 
-  const handleRemoveBook = async (
-    bookId
-  ) => {
+  const handleRemoveBook = async (bookId) => {
     const confirmed = window.confirm(
       "Remove this book from the shelf?"
     );
@@ -215,9 +172,7 @@ function ShelfDetails({
     }
   };
 
-  const handleShare = async (
-    event
-  ) => {
+  const handleShare = async (event) => {
     event.preventDefault();
 
     if (!shareEmail.trim()) {
@@ -247,10 +202,7 @@ function ShelfDetails({
         await onDataChange();
       }
     } catch (err) {
-      console.error(
-        "Share shelf error:",
-        err
-      );
+      console.error("Share shelf error:", err);
 
       setError(
         err.response?.data?.detail ||
@@ -261,9 +213,7 @@ function ShelfDetails({
     }
   };
 
-  const handleRoleChange = async (
-    collaborator
-  ) => {
+  const handleRoleChange = async (collaborator) => {
     const newRole =
       collaborator.role === "editor"
         ? "viewer"
@@ -344,57 +294,58 @@ function ShelfDetails({
       }
     };
 
-  const handleDeleteShelf =
-    async () => {
-      const confirmed = window.confirm(
-        `Delete shelf "${shelf.name}"? The books will not be deleted.`
+  const handleDeleteShelf = async () => {
+    const confirmed = window.confirm(
+      `Delete shelf "${shelf.name}"? The books will not be deleted.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingShelf(true);
+      setError("");
+
+      await api.delete(
+        `/shelves/${shelf.id}`
       );
 
-      if (!confirmed) {
-        return;
+      if (onDataChange) {
+        await onDataChange();
       }
 
-      try {
-        setDeletingShelf(true);
-        setError("");
+      onBack();
+    } catch (err) {
+      console.error(
+        "Delete shelf error:",
+        err
+      );
 
-        await api.delete(
-          `/shelves/${shelf.id}`
-        );
-
-        if (onDataChange) {
-          await onDataChange();
-        }
-
-        onBack();
-      } catch (err) {
-        console.error(
-          "Delete shelf error:",
-          err
-        );
-
-        setError(
-          err.response?.data?.detail ||
-            "Unable to delete shelf."
-        );
-      } finally {
-        setDeletingShelf(false);
-      }
-    };
+      setError(
+        err.response?.data?.detail ||
+          "Unable to delete shelf."
+      );
+    } finally {
+      setDeletingShelf(false);
+    }
+  };
 
   if (loading) {
     return (
-      <section className="page-section">
-        <button
-          type="button"
-          className="secondary-btn"
-          onClick={onBack}
-        >
-          ← Back to Shelves
-        </button>
-
+      <section className="page-section shelf-detail">
         <div className="loading-card">
           <p>Loading shelf...</p>
+        </div>
+
+        <div className="shelf-bottom-actions">
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={onBack}
+          >
+            Back to Shelves
+          </button>
         </div>
       </section>
     );
@@ -402,16 +353,10 @@ function ShelfDetails({
 
   return (
     <section className="page-section shelf-detail">
-      <div className="page-header">
-        <div>
-          <button
-            type="button"
-            className="secondary-btn"
-            onClick={onBack}
-          >
-            ← Back to Shelves
-          </button>
 
+      {/* Shelf Header */}
+      <div className="shelf-page-header">
+        <div>
           <h1>{shelf.name}</h1>
 
           <p>
@@ -426,7 +371,7 @@ function ShelfDetails({
         {role === "owner" && (
           <button
             type="button"
-            className="delete-btn"
+            className="delete-btn shelf-delete-btn"
             disabled={deletingShelf}
             onClick={handleDeleteShelf}
           >
@@ -444,10 +389,23 @@ function ShelfDetails({
       )}
 
       {/* Books */}
+      <div className="dashboard-card shelf-section">
 
-      <div className="dashboard-card">
         <div className="card-heading">
-          <h2>📚 Books</h2>
+          <div>
+            <h2>Books</h2>
+
+            <p className="section-description">
+              Books currently organized in this shelf.
+            </p>
+          </div>
+
+          <span className="shelf-count">
+            {books.length}{" "}
+            {books.length === 1
+              ? "book"
+              : "books"}
+          </span>
         </div>
 
         {canEdit && (
@@ -470,8 +428,7 @@ function ShelfDetails({
                   (book) =>
                     !books.some(
                       (shelfBook) =>
-                        shelfBook.id ===
-                        book.id
+                        shelfBook.id === book.id
                     )
                 )
                 .map((book) => (
@@ -479,8 +436,7 @@ function ShelfDetails({
                     key={book.id}
                     value={book.id}
                   >
-                    {book.title} —{" "}
-                    {book.author}
+                    {book.title} — {book.author}
                   </option>
                 ))}
             </select>
@@ -514,7 +470,7 @@ function ShelfDetails({
                 className="shelf-book"
                 key={book.id}
               >
-                <div>
+                <div className="shelf-book-info">
                   <h3>{book.title}</h3>
 
                   <p>{book.author}</p>
@@ -554,12 +510,18 @@ function ShelfDetails({
         )}
       </div>
 
-      {/* Sharing */}
-
+      {/* Collaborators */}
       {role === "owner" && (
-        <div className="dashboard-card">
+        <div className="dashboard-card shelf-section">
+
           <div className="card-heading">
-            <h2>👥 Collaborators</h2>
+            <div>
+              <h2>Collaborators</h2>
+
+              <p className="section-description">
+                Manage who can access this shelf.
+              </p>
+            </div>
 
             <button
               type="button"
@@ -582,6 +544,7 @@ function ShelfDetails({
               onSubmit={handleShare}
             >
               <div className="form-row">
+
                 <div className="form-group">
                   <label>Email</label>
 
@@ -594,9 +557,7 @@ function ShelfDetails({
                       )
                     }
                     placeholder="user@example.com"
-                    disabled={
-                      shareLoading
-                    }
+                    disabled={shareLoading}
                   />
                 </div>
 
@@ -610,9 +571,7 @@ function ShelfDetails({
                         event.target.value
                       )
                     }
-                    disabled={
-                      shareLoading
-                    }
+                    disabled={shareLoading}
                   >
                     <option value="viewer">
                       Viewer
@@ -623,6 +582,7 @@ function ShelfDetails({
                     </option>
                   </select>
                 </div>
+
               </div>
 
               <button
@@ -651,11 +611,9 @@ function ShelfDetails({
                     className="collaborator-row"
                     key={collaborator.id}
                   >
-                    <div>
+                    <div className="collaborator-info">
                       <strong>
-                        {
-                          collaborator.name
-                        }
+                        {collaborator.name}
                       </strong>
 
                       <span
@@ -666,13 +624,12 @@ function ShelfDetails({
                             : "status-want"
                         }`}
                       >
-                        {
-                          collaborator.role
-                        }
+                        {collaborator.role}
                       </span>
                     </div>
 
                     <div className="shelf-actions">
+
                       <button
                         type="button"
                         className="edit-btn"
@@ -713,6 +670,7 @@ function ShelfDetails({
                           ? "Removing..."
                           : "Remove"}
                       </button>
+
                     </div>
                   </div>
                 )
@@ -721,6 +679,18 @@ function ShelfDetails({
           )}
         </div>
       )}
+
+      {/* Bottom navigation */}
+      <div className="shelf-bottom-actions">
+        <button
+          type="button"
+          className="secondary-btn"
+          onClick={onBack}
+        >
+          Back to Shelves
+        </button>
+      </div>
+
     </section>
   );
 }

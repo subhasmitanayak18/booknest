@@ -48,15 +48,24 @@ function ShelfModal({ onClose, onSaved }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal shelf-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          <h2>Create Shelf</h2>
+          <div>
+            <h2>Create Shelf</h2>
+            <p className="modal-subtitle">
+              Create a new collection for your books.
+            </p>
+          </div>
 
           <button
             type="button"
             className="close-btn"
             onClick={onClose}
             disabled={saving}
+            aria-label="Close"
           >
             ×
           </button>
@@ -64,7 +73,9 @@ function ShelfModal({ onClose, onSaved }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="shelf-name">Shelf Name</label>
+            <label htmlFor="shelf-name">
+              Shelf Name
+            </label>
 
             <input
               id="shelf-name"
@@ -77,7 +88,11 @@ function ShelfModal({ onClose, onSaved }) {
             />
           </div>
 
-          {error && <div className="form-error">{error}</div>}
+          {error && (
+            <div className="form-error">
+              {error}
+            </div>
+          )}
 
           <div className="modal-actions">
             <button
@@ -94,7 +109,9 @@ function ShelfModal({ onClose, onSaved }) {
               className="primary-small-btn"
               disabled={saving}
             >
-              {saving ? "Creating..." : "Create Shelf"}
+              {saving
+                ? "Creating..."
+                : "Create Shelf"}
             </button>
           </div>
         </form>

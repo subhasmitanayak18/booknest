@@ -110,7 +110,9 @@ function Books({ onDataChange }) {
     const currentPage = Number(progressValues[bookId]);
 
     if (!Number.isInteger(currentPage) || currentPage < 0) {
-      setError("Current page must be a non-negative whole number.");
+      setError(
+        "Current page must be a non-negative whole number."
+      );
       return;
     }
 
@@ -174,10 +176,14 @@ function Books({ onDataChange }) {
 
   return (
     <section className="page-section">
+
+      {/* PAGE HEADER */}
       <div className="page-header">
         <div>
           <h1>My Books</h1>
-          <p>Manage your personal reading library.</p>
+          <p>
+            Manage your personal reading library.
+          </p>
         </div>
 
         <button
@@ -189,17 +195,17 @@ function Books({ onDataChange }) {
         </button>
       </div>
 
-      {/* Filters */}
+      {/* FILTER BAR */}
+      <div className="books-toolbar">
 
-      <div className="filters">
-        <div className="search-box">
+        <div className="books-search">
           <input
             type="text"
             value={search}
             onChange={(event) =>
               handleSearchChange(event.target.value)
             }
-            placeholder="Search title or author..."
+            placeholder="Search by title or author"
           />
         </div>
 
@@ -210,11 +216,18 @@ function Books({ onDataChange }) {
           }
         >
           <option value="">All Statuses</option>
+
           <option value="Want to Read">
             Want to Read
           </option>
-          <option value="Reading">Reading</option>
-          <option value="Finished">Finished</option>
+
+          <option value="Reading">
+            Reading
+          </option>
+
+          <option value="Finished">
+            Finished
+          </option>
         </select>
 
         <select
@@ -224,9 +237,17 @@ function Books({ onDataChange }) {
             setPage(1);
           }}
         >
-          <option value="date_added">Date Added</option>
-          <option value="title">Title</option>
-          <option value="rating">Rating</option>
+          <option value="date_added">
+            Date Added
+          </option>
+
+          <option value="title">
+            Title
+          </option>
+
+          <option value="rating">
+            Rating
+          </option>
         </select>
 
         <select
@@ -236,8 +257,13 @@ function Books({ onDataChange }) {
             setPage(1);
           }}
         >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
+          <option value="desc">
+            Descending
+          </option>
+
+          <option value="asc">
+            Ascending
+          </option>
         </select>
 
         {(search || statusFilter) && (
@@ -249,24 +275,32 @@ function Books({ onDataChange }) {
             Clear
           </button>
         )}
+
       </div>
 
+      {/* ERROR */}
       {error && (
         <div className="error-message">
           {error}
         </div>
       )}
 
+      {/* CONTENT */}
       {loading ? (
+
         <div className="loading-card">
           <p>Loading books...</p>
         </div>
+
       ) : books.length === 0 ? (
+
         <div className="dashboard-card empty-state">
+
           <h3>No books found</h3>
+
           <p>
-            Try changing your search or filters, or add
-            your first book.
+            Try changing your search or filters,
+            or add your first book.
           </p>
 
           <button
@@ -276,10 +310,16 @@ function Books({ onDataChange }) {
           >
             + Add Book
           </button>
+
         </div>
+
       ) : (
+
         <>
+
+          {/* BOOK GRID */}
           <div className="books-grid">
+
             {books.map((book) => (
               <BookCard
                 key={book.id}
@@ -292,41 +332,57 @@ function Books({ onDataChange }) {
                   book.current_page ??
                   0
                 }
-                onProgressChange={handleProgressChange}
-                onProgressUpdate={handleProgressUpdate}
+                onProgressChange={
+                  handleProgressChange
+                }
+                onProgressUpdate={
+                  handleProgressUpdate
+                }
                 updatingProgress={
                   updatingProgressId === book.id
                 }
               />
             ))}
+
           </div>
 
+          {/* PAGINATION */}
           <div className="pagination">
+
             <button
               type="button"
               disabled={!canGoPrevious}
               onClick={() =>
-                setPage((current) => current - 1)
+                setPage(
+                  (current) => current - 1
+                )
               }
             >
               ← Previous
             </button>
 
-            <span>Page {page}</span>
+            <span>
+              Page {page}
+            </span>
 
             <button
               type="button"
               disabled={!canGoNext}
               onClick={() =>
-                setPage((current) => current + 1)
+                setPage(
+                  (current) => current + 1
+                )
               }
             >
               Next →
             </button>
+
           </div>
+
         </>
       )}
 
+      {/* BOOK MODAL */}
       {showModal && (
         <BookModal
           book={editingBook}
@@ -334,14 +390,15 @@ function Books({ onDataChange }) {
           onSaved={handleBookSaved}
         />
       )}
+
     </section>
   );
 }
 
 
-// ==================================================
-// Book Card
-// ==================================================
+/* ==================================================
+   BOOK CARD
+================================================== */
 
 function BookCard({
   book,
@@ -354,24 +411,33 @@ function BookCard({
   updatingProgress,
 }) {
   const progress =
-    book.total_pages > 0 && book.current_page != null
+    book.total_pages > 0 &&
+    book.current_page != null
       ? Math.min(
           100,
           Math.round(
-            (book.current_page / book.total_pages) * 100
+            (book.current_page /
+              book.total_pages) *
+              100
           )
         )
       : 0;
 
   return (
     <article className="book-card">
+
       <div className="book-card-header">
-        <div>
-          <h3>{book.title}</h3>
+
+        <div className="book-title-area">
+
+          <h3>
+            {book.title}
+          </h3>
 
           <p className="book-author">
             {book.author}
           </p>
+
         </div>
 
         <span
@@ -381,19 +447,30 @@ function BookCard({
         >
           {book.status}
         </span>
+
       </div>
 
+      {/* BOOK DETAILS */}
       <div className="book-details">
-        <p>
-          <strong>Pages:</strong>{" "}
-          {book.total_pages}
-        </p>
+
+        <div className="book-detail-row">
+          <span>Pages</span>
+
+          <strong>
+            {book.total_pages}
+          </strong>
+        </div>
 
         {book.rating != null && (
-          <p>
-            <strong>Rating:</strong>{" "}
-            {"⭐".repeat(book.rating)}
-          </p>
+          <div className="book-detail-row">
+
+            <span>Rating</span>
+
+            <strong>
+              {book.rating}/5
+            </strong>
+
+          </div>
         )}
 
         {book.notes && (
@@ -401,27 +478,44 @@ function BookCard({
             {book.notes}
           </p>
         )}
+
       </div>
 
+      {/* READING PROGRESS */}
       {book.status === "Reading" && (
+
         <div className="progress-section">
+
           <div className="progress-header">
-            <span>Reading Progress</span>
 
             <span>
-              {book.current_page ?? 0}/
-              {book.total_pages} ({progress}%)
+              Reading Progress
             </span>
+
+            <strong>
+              {book.current_page ?? 0}/
+              {book.total_pages}
+            </strong>
+
           </div>
 
           <div className="progress-bar">
+
             <div
               className="progress-fill"
-              style={{ width: `${progress}%` }}
+              style={{
+                width: `${progress}%`,
+              }}
             />
+
+          </div>
+
+          <div className="progress-percentage">
+            {progress}% complete
           </div>
 
           <div className="progress-update">
+
             <input
               type="number"
               min="0"
@@ -446,13 +540,17 @@ function BookCard({
             >
               {updatingProgress
                 ? "Updating..."
-                : "Update Progress"}
+                : "Update"}
             </button>
+
           </div>
+
         </div>
       )}
 
+      {/* ACTIONS */}
       <div className="book-actions">
+
         <button
           type="button"
           className="edit-btn"
@@ -465,19 +563,25 @@ function BookCard({
           type="button"
           className="delete-btn"
           disabled={deleting}
-          onClick={() => onDelete(book.id)}
+          onClick={() =>
+            onDelete(book.id)
+          }
         >
-          {deleting ? "Deleting..." : "Delete"}
+          {deleting
+            ? "Deleting..."
+            : "Delete"}
         </button>
+
       </div>
+
     </article>
   );
 }
 
 
-// ==================================================
-// Helpers
-// ==================================================
+/* ==================================================
+   HELPERS
+================================================== */
 
 function getStatusClass(status) {
   if (status === "Reading") {
@@ -490,5 +594,6 @@ function getStatusClass(status) {
 
   return "status-want";
 }
+
 
 export default Books;

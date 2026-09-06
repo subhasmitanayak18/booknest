@@ -12,7 +12,6 @@ function Shelves({ onDataChange, realtimeEvent }) {
   const [error, setError] = useState("");
 
   const [showShelfModal, setShowShelfModal] = useState(false);
-
   const [selectedShelf, setSelectedShelf] = useState(null);
 
   const loadShelves = async () => {
@@ -44,7 +43,6 @@ function Shelves({ onDataChange, realtimeEvent }) {
     loadShelves();
   }, []);
 
-  // Refresh shelf lists when realtime shelf events arrive
   useEffect(() => {
     if (!realtimeEvent) {
       return;
@@ -87,7 +85,7 @@ function Shelves({ onDataChange, realtimeEvent }) {
     return (
       <section className="page-section">
         <div className="loading-card">
-          <h2>🗂️ Shelves</h2>
+          <h2>Shelves</h2>
           <p>Loading your shelves...</p>
         </div>
       </section>
@@ -126,7 +124,7 @@ function Shelves({ onDataChange, realtimeEvent }) {
           className="primary-btn"
           onClick={() => setShowShelfModal(true)}
         >
-          + Create Shelf
+          Create Shelf
         </button>
       </div>
 
@@ -136,11 +134,14 @@ function Shelves({ onDataChange, realtimeEvent }) {
         </div>
       )}
 
-      {/* My Shelves */}
-
       <div className="dashboard-card">
         <div className="card-heading">
-          <h2>🗂️ My Shelves</h2>
+          <div>
+            <h2>My Shelves</h2>
+            <p className="section-description">
+              Your personal book collections.
+            </p>
+          </div>
 
           <button
             type="button"
@@ -171,13 +172,11 @@ function Shelves({ onDataChange, realtimeEvent }) {
               <article
                 className="shelf-card"
                 key={shelf.id}
-                onClick={() =>
-                  setSelectedShelf(shelf)
-                }
+                onClick={() => setSelectedShelf(shelf)}
               >
                 <div className="shelf-card-header">
                   <div>
-                    <h3>📚 {shelf.name}</h3>
+                    <h3>{shelf.name}</h3>
 
                     <p>
                       Created{" "}
@@ -210,8 +209,6 @@ function Shelves({ onDataChange, realtimeEvent }) {
         )}
       </div>
 
-      {/* Shared Shelves */}
-
       <SharedShelves
         shelves={sharedShelves}
         onOpen={setSelectedShelf}
@@ -219,9 +216,7 @@ function Shelves({ onDataChange, realtimeEvent }) {
 
       {showShelfModal && (
         <ShelfModal
-          onClose={() =>
-            setShowShelfModal(false)
-          }
+          onClose={() => setShowShelfModal(false)}
           onSaved={handleShelfCreated}
         />
       )}

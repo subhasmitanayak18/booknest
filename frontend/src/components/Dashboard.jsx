@@ -29,35 +29,37 @@ function Dashboard({ onNavigate, realtimeEvent }) {
   useEffect(() => {
     loadDashboard();
   }, []);
-useEffect(() => {
-  if (!realtimeEvent) {
-    return;
-  }
 
-  const dashboardEvents = [
-    "BOOK_ADDED",
-    "BOOK_UPDATED",
-    "BOOK_DELETED",
-    "BOOK_LENT",
-    "BOOK_RETURNED",
-    "SHELF_CREATED",
-    "SHELF_BOOK_ADDED",
-    "SHELF_BOOK_REMOVED",
-    "SHELF_SHARED",
-    "COLLABORATOR_ROLE_CHANGED",
-    "COLLABORATOR_REMOVED",
-    "ACTIVITY_CREATED",
-  ];
+  useEffect(() => {
+    if (!realtimeEvent) {
+      return;
+    }
 
-  if (dashboardEvents.includes(realtimeEvent.type)) {
-    loadDashboard();
-  }
-}, [realtimeEvent]);
+    const dashboardEvents = [
+      "BOOK_ADDED",
+      "BOOK_UPDATED",
+      "BOOK_DELETED",
+      "BOOK_LENT",
+      "BOOK_RETURNED",
+      "SHELF_CREATED",
+      "SHELF_BOOK_ADDED",
+      "SHELF_BOOK_REMOVED",
+      "SHELF_SHARED",
+      "COLLABORATOR_ROLE_CHANGED",
+      "COLLABORATOR_REMOVED",
+      "ACTIVITY_CREATED",
+    ];
+
+    if (dashboardEvents.includes(realtimeEvent.type)) {
+      loadDashboard();
+    }
+  }, [realtimeEvent]);
+
   if (loading) {
     return (
       <section className="page-section">
         <div className="loading-card">
-          <h2>📊 Dashboard</h2>
+          <h2>Dashboard</h2>
           <p>Loading your reading activity...</p>
         </div>
       </section>
@@ -89,9 +91,18 @@ useEffect(() => {
   const books = dashboard.books || {};
 
   return (
-    <section className="page-section">
-      <div className="page-header">
+    <section className="page-section dashboard-page">
+
+      {/* =========================
+          PAGE HEADER
+      ========================= */}
+
+      <div className="dashboard-header">
         <div>
+          <span className="dashboard-eyebrow">
+            YOUR LIBRARY
+          </span>
+
           <h1>Dashboard</h1>
 
           <p>
@@ -104,44 +115,60 @@ useEffect(() => {
           className="primary-btn"
           onClick={() => onNavigate("books")}
         >
-          + Add Book
+          Add Book
         </button>
       </div>
 
-      {/* Statistics */}
 
-      <div className="stats-grid">
-        <StatCard
-          label="Total Books"
-          value={books.total ?? 0}
-          icon="📚"
-        />
+      {/* =========================
+          LIBRARY OVERVIEW
+      ========================= */}
 
-        <StatCard
-          label="Want to Read"
-          value={books.want_to_read ?? 0}
-          icon="📖"
-        />
+      <section className="overview-section">
 
-        <StatCard
-          label="Reading"
-          value={books.reading ?? 0}
-          icon="📕"
-        />
+        <div className="section-label">
+          LIBRARY OVERVIEW
+        </div>
 
-        <StatCard
-          label="Finished"
-          value={books.finished ?? 0}
-          icon="✅"
-        />
+        <div className="stats-grid dashboard-stats">
 
-        <StatCard
+          <StatCard
+            label="Total Books"
+            value={books.total ?? 0}
+          />
+
+          <StatCard
+            label="Want to Read"
+            value={books.want_to_read ?? 0}
+          />
+
+          <StatCard
+            label="Reading"
+            value={books.reading ?? 0}
+          />
+
+          <StatCard
+            label="Finished"
+            value={books.finished ?? 0}
+          />
+
+        </div>
+
+      </section>
+
+
+      {/* =========================
+          SECONDARY STATISTICS
+      ========================= */}
+
+      <div className="secondary-stats">
+
+        <MiniStat
           label="Finished This Year"
           value={dashboard.finished_this_year ?? 0}
-          icon="🏆"
         />
 
-        <StatCard
+        <MiniStat
           label="Average Rating"
           value={
             dashboard.average_rating !== null &&
@@ -149,52 +176,80 @@ useEffect(() => {
               ? dashboard.average_rating
               : "—"
           }
-          icon="⭐"
         />
 
-        <StatCard
+        <MiniStat
           label="Currently Lent"
           value={dashboard.currently_lent_out ?? 0}
-          icon="🤝"
         />
 
-        <StatCard
+        <MiniStat
           label="Shared With Me"
           value={dashboard.shelves_shared_with_me ?? 0}
-          icon="👥"
         />
+
       </div>
 
-      {/* Lower dashboard */}
 
-      <div className="dashboard-grid">
-        {/* Largest Shelf */}
+      {/* =========================
+          LIBRARY HIGHLIGHTS
+      ========================= */}
 
-        <div className="dashboard-card">
+      <div className="dashboard-grid dashboard-highlights">
+
+        {/* LARGEST SHELF */}
+
+        <div className="dashboard-card library-highlight">
+
           <div className="card-heading">
-            <h2>📚 Largest Shelf</h2>
+            <div>
+              <span className="section-label">
+                YOUR LIBRARY
+              </span>
+
+              <h2>Largest Shelf</h2>
+            </div>
           </div>
 
           {dashboard.shelf_with_most_books ? (
+
             <div className="largest-shelf">
+
+              <span className="highlight-label">
+                MOST BOOKS
+              </span>
+
               <h3>
                 {dashboard.shelf_with_most_books.name}
               </h3>
 
-              <p>
-                {
-                  dashboard.shelf_with_most_books
-                    .book_count
-                }{" "}
-                book
-                {dashboard.shelf_with_most_books
-                  .book_count !== 1
-                  ? "s"
-                  : ""}
-              </p>
+              <div className="shelf-count-display">
+                <strong>
+                  {dashboard.shelf_with_most_books.book_count}
+                </strong>
+
+                <span>
+                  {dashboard.shelf_with_most_books.book_count === 1
+                    ? "book"
+                    : "books"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="text-btn"
+                onClick={() => onNavigate("shelves")}
+              >
+                View Shelves
+                <span aria-hidden="true"> →</span>
+              </button>
+
             </div>
+
           ) : (
-            <div className="empty-state">
+
+            <div className="empty-state dashboard-empty">
+
               <p>No shelves yet.</p>
 
               <button
@@ -204,69 +259,196 @@ useEffect(() => {
               >
                 Create Shelf
               </button>
+
             </div>
+
           )}
+
         </div>
 
-        {/* Recent Activity */}
 
-        <div className="dashboard-card">
+        {/* READING STATUS */}
+
+        <div className="dashboard-card reading-summary">
+
           <div className="card-heading">
-            <h2>⚡ Recent Activity</h2>
+            <div>
+              <span className="section-label">
+                READING
+              </span>
+
+              <h2>Reading Status</h2>
+            </div>
 
             <button
               type="button"
               className="text-btn"
-              onClick={() => onNavigate("activity")}
+              onClick={() => onNavigate("books")}
             >
-              View All
+              My Books
             </button>
           </div>
 
-          {dashboard.recent_activity?.length > 0 ? (
-            <div className="activity-list">
-              {dashboard.recent_activity.map(
-                (activity) => (
-                  <ActivityItem
-                    key={activity.id}
-                    activity={activity}
-                  />
-                )
-              )}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>No recent activity.</p>
-            </div>
-          )}
+          <div className="reading-status-content">
+
+            <ReadingStatus
+              label="Want to Read"
+              value={books.want_to_read ?? 0}
+              className="want"
+            />
+
+            <ReadingStatus
+              label="Currently Reading"
+              value={books.reading ?? 0}
+              className="reading"
+            />
+
+            <ReadingStatus
+              label="Finished"
+              value={books.finished ?? 0}
+              className="finished"
+            />
+
+          </div>
+
         </div>
+
       </div>
+
+
+      {/* =========================
+          RECENT ACTIVITY
+      ========================= */}
+
+      <div className="dashboard-card activity-card">
+
+        <div className="card-heading">
+
+          <div>
+            <span className="section-label">
+              TIMELINE
+            </span>
+
+            <h2>Recent Activity</h2>
+          </div>
+
+          <button
+            type="button"
+            className="text-btn"
+            onClick={() => onNavigate("activity")}
+          >
+            View All
+            <span aria-hidden="true"> →</span>
+          </button>
+
+        </div>
+
+        {dashboard.recent_activity?.length > 0 ? (
+
+          <div className="activity-list">
+
+            {dashboard.recent_activity.map((activity) => (
+
+              <ActivityItem
+                key={activity.id}
+                activity={activity}
+              />
+
+            ))}
+
+          </div>
+
+        ) : (
+
+          <div className="empty-state">
+            <p>No recent activity.</p>
+          </div>
+
+        )}
+
+      </div>
+
     </section>
   );
 }
 
-// --------------------------------------------------
-// Statistic Card
-// --------------------------------------------------
 
-function StatCard({ label, value, icon }) {
+/* =========================
+   STAT CARD
+========================= */
+
+function StatCard({ label, value }) {
   return (
     <div className="stat-card">
-      <div className="stat-icon">
-        {icon}
-      </div>
 
       <div className="stat-content">
-        <span>{label}</span>
-        <strong>{value}</strong>
+
+        <span className="stat-label">
+          {label}
+        </span>
+
+        <strong className="stat-value">
+          {value}
+        </strong>
+
       </div>
+
     </div>
   );
 }
 
-// --------------------------------------------------
-// Activity Item
-// --------------------------------------------------
+
+/* =========================
+   MINI STAT
+========================= */
+
+function MiniStat({ label, value }) {
+  return (
+    <div className="mini-stat">
+
+      <span className="mini-stat-label">
+        {label}
+      </span>
+
+      <strong className="mini-stat-value">
+        {value}
+      </strong>
+
+    </div>
+  );
+}
+
+
+/* =========================
+   READING STATUS
+========================= */
+
+function ReadingStatus({ label, value, className }) {
+  return (
+    <div className={`reading-status ${className}`}>
+
+      <div className="reading-status-indicator" />
+
+      <div className="reading-status-info">
+
+        <span>
+          {label}
+        </span>
+
+        <strong>
+          {value}
+        </strong>
+
+      </div>
+
+    </div>
+  );
+}
+
+
+/* =========================
+   ACTIVITY ITEM
+========================= */
 
 function ActivityItem({ activity }) {
   const date = activity.created_at
@@ -275,17 +457,28 @@ function ActivityItem({ activity }) {
 
   return (
     <div className="activity-item">
-      <div className="activity-action">
-        <strong>{activity.action}</strong>
+
+      <div className="activity-marker" />
+
+      <div className="activity-content">
+
+        <span className="activity-type">
+          {activity.action}
+        </span>
+
+        <p className="activity-description">
+          {activity.description}
+        </p>
+
+        <span className="activity-date">
+          {date}
+        </span>
+
       </div>
 
-      <p>{activity.description}</p>
-
-      <span className="activity-date">
-        {date}
-      </span>
     </div>
   );
 }
+
 
 export default Dashboard;

@@ -8,27 +8,22 @@ function Navbar({
     {
       id: "dashboard",
       label: "Dashboard",
-      icon: "📊",
     },
     {
       id: "books",
       label: "My Books",
-      icon: "📚",
     },
     {
       id: "shelves",
       label: "Shelves",
-      icon: "🗂️",
     },
     {
       id: "lending",
       label: "Lending",
-      icon: "🤝",
     },
     {
       id: "activity",
       label: "Activity",
-      icon: "⚡",
     },
   ];
 
@@ -36,7 +31,7 @@ function Navbar({
     <header className="navbar">
       <div className="navbar-left">
         <div className="brand">
-          📚 <span>BookNest</span>
+          <span>BookNest</span>
         </div>
 
         <nav className="nav-links">
@@ -51,7 +46,6 @@ function Navbar({
               }
               onClick={() => setActiveSection(item.id)}
             >
-              <span>{item.icon}</span>
               {item.label}
             </button>
           ))}

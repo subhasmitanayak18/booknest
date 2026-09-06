@@ -2,7 +2,12 @@ function SharedShelves({ shelves, onOpen }) {
   return (
     <div className="dashboard-card">
       <div className="card-heading">
-        <h2>👥 Shared With Me</h2>
+        <div>
+          <h2>Shared With Me</h2>
+          <p className="section-description">
+            Shelves that other users have shared with you.
+          </p>
+        </div>
       </div>
 
       {!shelves || shelves.length === 0 ? (
@@ -20,11 +25,9 @@ function SharedShelves({ shelves, onOpen }) {
             >
               <div className="shelf-card-header">
                 <div>
-                  <h3>📚 {shelf.name}</h3>
+                  <h3>{shelf.name}</h3>
 
-                  <p>
-                    Shared shelf
-                  </p>
+                  <p>Shared shelf</p>
                 </div>
 
                 <span
