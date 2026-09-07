@@ -15,6 +15,10 @@ function Lending({ realtimeEvent }) {
   const [borrowerEmail, setBorrowerEmail] = useState("");
   const [lending, setLending] = useState(false);
 
+  /* ==================================================
+     LOAD LENDING DATA
+  ================================================== */
+
   const loadLoans = async () => {
     try {
       setLoading(true);
@@ -47,9 +51,17 @@ function Lending({ realtimeEvent }) {
     }
   };
 
+  /* ==================================================
+     INITIAL LOAD
+  ================================================== */
+
   useEffect(() => {
     loadLoans();
   }, []);
+
+  /* ==================================================
+     REALTIME UPDATES
+  ================================================== */
 
   useEffect(() => {
     if (!realtimeEvent) {
@@ -65,6 +77,22 @@ function Lending({ realtimeEvent }) {
       loadLoans();
     }
   }, [realtimeEvent]);
+
+  /* ==================================================
+     GET BOOK TITLE
+  ================================================== */
+
+  const getBookTitle = (bookId) => {
+    const book = books.find(
+      (item) => Number(item.id) === Number(bookId)
+    );
+
+    return book?.title || "Unknown Book";
+  };
+
+  /* ==================================================
+     LEND BOOK
+  ================================================== */
 
   const handleLend = async (e) => {
     e.preventDefault();
@@ -100,6 +128,10 @@ function Lending({ realtimeEvent }) {
     }
   };
 
+  /* ==================================================
+     RETURN BOOK
+  ================================================== */
+
   const handleReturn = async (loanId) => {
     try {
       setReturningId(loanId);
@@ -122,22 +154,36 @@ function Lending({ realtimeEvent }) {
     }
   };
 
+  /* ==================================================
+     LOADING
+  ================================================== */
+
   if (loading) {
     return (
       <section className="page-section">
         <div className="loading-card">
-          <h2>🤝 Lending</h2>
+          <h2>Lending</h2>
           <p>Loading lending information...</p>
         </div>
       </section>
     );
   }
 
+  /* ==================================================
+     MAIN UI
+  ================================================== */
+
   return (
     <section className="page-section">
+
+      {/* =========================
+          PAGE HEADER
+      ========================= */}
+
       <div className="page-header">
         <div>
           <h1>Lending</h1>
+
           <p>
             Manage books you have lent and books borrowed
             from others.
@@ -153,42 +199,71 @@ function Lending({ realtimeEvent }) {
         </button>
       </div>
 
+
+      {/* =========================
+          ERROR
+      ========================= */}
+
       {error && (
         <div className="error-message">
           {error}
         </div>
       )}
 
+
+      {/* ==================================================
+          LEND A BOOK
+      ================================================== */}
+
       <div className="dashboard-card">
+
         <div className="card-heading">
-          <h2>📤 Lend a Book</h2>
+          <h2>Lend a Book</h2>
         </div>
 
         <form onSubmit={handleLend}>
+
           <div className="form-group">
-            <label>Select Book</label>
+
+            <label htmlFor="lend-book">
+              Select Book
+            </label>
 
             <select
+              id="lend-book"
               value={selectedBookId}
               onChange={(e) =>
                 setSelectedBookId(e.target.value)
               }
               disabled={lending}
             >
-              <option value="">Select a book</option>
+
+              <option value="">
+                Select a book
+              </option>
 
               {books.map((book) => (
-                <option key={book.id} value={book.id}>
+                <option
+                  key={book.id}
+                  value={book.id}
+                >
                   {book.title} — {book.author}
                 </option>
               ))}
+
             </select>
+
           </div>
 
+
           <div className="form-group">
-            <label>Borrower's Email</label>
+
+            <label htmlFor="borrower-email">
+              Borrower's Email
+            </label>
 
             <input
+              id="borrower-email"
               type="email"
               value={borrowerEmail}
               onChange={(e) =>
@@ -197,38 +272,62 @@ function Lending({ realtimeEvent }) {
               placeholder="user@example.com"
               disabled={lending}
             />
+
           </div>
+
 
           <button
             type="submit"
             className="primary-btn"
             disabled={lending}
           >
-            {lending ? "Lending..." : "Lend Book"}
+            {lending
+              ? "Lending..."
+              : "Lend Book"}
           </button>
+
         </form>
+
       </div>
 
+
+      {/* ==================================================
+          BOOKS I LENT
+      ================================================== */}
+
       <div className="dashboard-card">
+
         <div className="card-heading">
-          <h2>📤 Books I Lent</h2>
+          <h2>Books I Lent</h2>
         </div>
 
+
         {loans.length === 0 ? (
+
           <div className="empty-state">
-            <p>You haven't lent any books yet.</p>
+            <p>
+              You haven't lent any books yet.
+            </p>
           </div>
+
         ) : (
+
           <div className="loan-list">
+
             {loans.map((loan) => (
+
               <div
                 className="loan-row"
                 key={loan.id}
               >
+
                 <div className="loan-info">
+
+                  {/* BOOK TITLE INSTEAD OF BOOK ID */}
                   <strong>
-                    Book #{loan.book_id}
+                    {getBookTitle(loan.book_id)}
                   </strong>
+
 
                   <p>
                     Lent on{" "}
@@ -239,24 +338,37 @@ function Lending({ realtimeEvent }) {
                       : "—"}
                   </p>
 
+
                   {loan.returned_at ? (
+
                     <span className="status-badge status-finished">
                       Returned
                     </span>
+
                   ) : (
+
                     <span className="status-badge status-reading">
                       Currently Lent
                     </span>
+
                   )}
+
                 </div>
 
+
+                {/* RETURN ACTION */}
+
                 {!loan.returned_at && (
+
                   <>
                     {confirmReturnId === loan.id ? (
+
                       <div className="return-confirm">
+
                         <span>
                           Mark as returned?
                         </span>
+
 
                         <button
                           type="button"
@@ -273,6 +385,7 @@ function Lending({ realtimeEvent }) {
                             : "Yes"}
                         </button>
 
+
                         <button
                           type="button"
                           className="secondary-btn"
@@ -285,8 +398,11 @@ function Lending({ realtimeEvent }) {
                         >
                           Cancel
                         </button>
+
                       </div>
+
                     ) : (
+
                       <button
                         type="button"
                         className="primary-small-btn"
@@ -296,37 +412,67 @@ function Lending({ realtimeEvent }) {
                       >
                         Mark Returned
                       </button>
+
                     )}
                   </>
+
                 )}
+
               </div>
+
             ))}
+
           </div>
+
         )}
+
       </div>
 
+
+      {/* ==================================================
+          BOOKS BORROWED
+      ================================================== */}
+
       <div className="dashboard-card">
+
         <div className="card-heading">
-          <h2>📥 Books Borrowed</h2>
+          <h2>Books Borrowed</h2>
         </div>
 
+
         {borrowedBooks.length === 0 ? (
+
           <div className="empty-state">
-            <p>You haven't borrowed any books.</p>
+
+            <p>
+              You haven't borrowed any books.
+            </p>
+
           </div>
+
         ) : (
+
           <div className="loan-list">
+
             {borrowedBooks.map((book) => (
+
               <div
                 className="loan-row"
                 key={book.loan_id}
               >
+
                 <div className="loan-info">
-                  <strong>{book.title}</strong>
+
+                  {/* BOOK TITLE */}
+                  <strong>
+                    {book.title}
+                  </strong>
+
 
                   <p>
                     by {book.author}
                   </p>
+
 
                   <p>
                     Borrowed on{" "}
@@ -337,22 +483,33 @@ function Lending({ realtimeEvent }) {
                       : "—"}
                   </p>
 
+
                   {book.returned_at ? (
+
                     <span className="status-badge status-finished">
                       Returned
                     </span>
+
                   ) : (
+
                     <>
+
                       <span className="status-badge status-reading">
                         Currently Borrowed
                       </span>
 
+
+                      {/* RETURN CONFIRMATION */}
+
                       {confirmReturnId ===
                       book.loan_id ? (
+
                         <div className="return-confirm">
+
                           <span>
                             Return this book?
                           </span>
+
 
                           <button
                             type="button"
@@ -373,6 +530,7 @@ function Lending({ realtimeEvent }) {
                               : "Yes"}
                           </button>
 
+
                           <button
                             type="button"
                             className="secondary-btn"
@@ -386,8 +544,11 @@ function Lending({ realtimeEvent }) {
                           >
                             Cancel
                           </button>
+
                         </div>
+
                       ) : (
+
                         <button
                           type="button"
                           className="primary-small-btn"
@@ -399,15 +560,25 @@ function Lending({ realtimeEvent }) {
                         >
                           Return Book
                         </button>
+
                       )}
+
                     </>
+
                   )}
+
                 </div>
+
               </div>
+
             ))}
+
           </div>
+
         )}
+
       </div>
+
     </section>
   );
 }

@@ -174,7 +174,6 @@ def get_shelf(
            for item in collaborators
            ],
           }
-
 @router.post("/{shelf_id}/books/{book_id}")
 async def add_book_to_shelf(
     shelf_id: int,
@@ -205,9 +204,11 @@ async def add_book_to_shelf(
             "Only the owner or editor can add books"
         )
 
+    # Owner can add their own books.
+    # Editor can add their own books to a shared shelf.
     book = db.query(Book).filter(
         Book.id == book_id,
-        Book.owner_id == shelf.owner_id
+        Book.owner_id == current_user.id
     ).first()
 
     if not book:

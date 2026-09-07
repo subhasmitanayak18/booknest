@@ -38,6 +38,11 @@ async def create_book(
         notes=book.notes
     )
 
+    # If the book is created as Finished,
+    # record when it was completed.
+    if book.status.value == BookStatus.FINISHED.value:
+        new_book.finished_at = datetime.utcnow()
+
     db.add(new_book)
     db.flush()
 
@@ -153,7 +158,21 @@ async def update_book(
         existing_book.author = book.author
 
     if book.status is not None:
-        existing_book.status = book.status.value
+        new_status = book.status.value
+        existing_book.status = new_status
+
+        # Handle completion timestamp whenever
+        # the reading status changes.
+        if new_status == BookStatus.FINISHED.value:
+            # Set a completion time when the book becomes Finished.
+            # This also handles Finished -> Finished updates safely.
+            if old_status != BookStatus.FINISHED.value:
+                existing_book.finished_at = datetime.utcnow()
+
+        else:
+            # Any status other than Finished means
+            # the book is no longer considered completed.
+            existing_book.finished_at = None
 
     if book.total_pages is not None:
         existing_book.total_pages = book.total_pages

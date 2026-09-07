@@ -9,10 +9,9 @@ import Shelves from "./components/Shelves";
 import Lending from "./components/Lending";
 import Activity from "./components/Activity";
 import useWebSocket from "./hooks/useWebSocket";
-const [openAddBook, setOpenAddBook] = useState(false);
 function App() {
  const [realtimeEvent, setRealtimeEvent] = useState(null);
-
+const [openAddBook, setOpenAddBook] = useState(false);
 const handleWebSocketEvent = useCallback((event) => {
   console.log("Realtime event:", event);
   setRealtimeEvent(event);
